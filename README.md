@@ -18,8 +18,4 @@ To run this locally, run:
 ### Production
 Build Docker image
 
-`docker build -t kontxt/smtp-emulator .`
-
-Run container
-
-`docker run --rm -p 443:25 -d kontxt/smtp-emulator`
+`docker-compose up --build -d`

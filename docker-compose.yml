@@ -1,21 +1,11 @@
 version: '3'
 
 services:
-
-  nginx:
-    build:
-      context: ./
-      dockerfile: ./docker/nginx/Dockerfile
-    restart: always
+  mms:
+    build: .
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
     ports:
-      - 443:80
-    volumes:
-      - .:/var/www/app
-
-  smtp:
-    build: ./docker/mms
-    restart: always
-    expose:
-      - 25
-    volumes:
-      - .:/var/www/app
+      - 10025:10025
+    command: npm start

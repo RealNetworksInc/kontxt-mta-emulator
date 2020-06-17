@@ -7,10 +7,10 @@ const {SMTPServer} = require('smtp-server');
 
 const axios = require('axios');
 
-const listenPort     = '25';
+const listenPort     = '10025';
 const dropCode       = 559;
 const kontxtFeature = 'inflight_local';
-const kontxtApi      = 'http://hostip:7777/text/analyze';
+const kontxtApi      = 'http://host.docker.internal:7777/text/analyze';
 
 let kontxtResult = '';
 
