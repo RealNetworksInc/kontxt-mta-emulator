@@ -7,5 +7,5 @@ services:
       - .:/usr/src/app
       - /usr/src/app/node_modules
     ports:
-      - 10025:10025
+      - 25:10025
     command: npm start
