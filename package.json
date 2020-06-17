@@ -5,7 +5,9 @@
   "main": "server.js",
   "dependencies": {
     "axios": "^0.19.2",
-    "smtp-server": "^3.6.0"
+    "pino": "^6.3.0",
+    "smtp-server": "^3.6.0",
+    "xss-clean": "^0.1.1"
   },
   "devDependencies": {},
   "scripts": {

@@ -2,44 +2,70 @@
 
 'use strict';
 
-// smtp.js
+// mms.js
 const {SMTPServer} = require('smtp-server');
+
 const axios = require('axios');
 
-const listenPort     = '10025';
+const listenPort     = '25';
 const dropCode       = 559;
-const kontxtFeatures = [ 'inflight_local' ];
-const kontxtApi      = 'http://localhost:7777/text/analyze';
+const kontxtFeature = 'inflight_local';
+const kontxtApi      = 'http://hostip:7777/text/analyze';
 
 let kontxtResult = '';
 
+let concatStream = '';
 
 const server = new SMTPServer({
     // disable STARTTLS to allow authentication in clear text mode
     banner: 'Welcome to the KONTXT SMTP MTA Emulator',
     disabledCommands: ['STARTTLS', 'AUTH'],
-    logger: true,
+    logger: false,
     // Accept messages up to 20 MB
     size: 20 * 1024 * 1024,
     onData (stream, session, callback ){
+
         stream.pipe(process.stdout); // print message to console
+
+        stream.on( 'data', (chunk) => {
+            concatStream += chunk.toString();
+        });
+
         stream.on('end', () => {
 
             axios.post( kontxtApi, {
-                features: kontxtFeatures,
-                rawSmtp: callback
-            })
+
+                features: kontxtFeature,
+                rawSmtp: concatStream
+
+            } )
                 .then((res) => {
-                    kontxtResult = res.data.data[0]['inflight_local_results'].block;
-                    console.log( kontxtResult );
-                    if( kontxtResult === 'Blocked') {
-                        callback( dropCode, "Message blocked. Inflight Response: " + kontxtResult );
-                        return;
+
+                    console.log( res.data );
+
+                    if( undefined !== res.data.data[0]  ) {
+
+                        const inflightResults = res.data.data[0]['inflight_local_results'];
+
+                        kontxtResult = inflightResults.block;
+
+                        console.log( 'Found block result in response: ' + kontxtResult );
+
                     }
-                    callback( null, "Message queued. Inflight Response: " + kontxtResult );
+
+                    if (kontxtResult === 'Blocked') {
+
+                        let err = new Error( 'Message blocked. Inflight Response: ' + kontxtResult );
+                        err.responseCode = dropCode;
+                        return callback( err );
+
+                    }
+                    callback(null, "Message OK. Inflight Response: " + kontxtResult);
+
                 })
                 .catch((error) => {
-                    console.error( error )
+                    console.error( error );
+                    callback(null, "Message OK. Inflight Response: None (Err)");
                 })
 
         });

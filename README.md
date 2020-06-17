@@ -14,3 +14,12 @@ To run this locally, run:
 `npm install` then
 
 `npm start`
+
+### Production
+Build Docker image
+
+`docker build -t kontxt/smtp-emulator .`
+
+Run container
+
+`docker run --rm -p 443:25 -d kontxt/smtp-emulator`
