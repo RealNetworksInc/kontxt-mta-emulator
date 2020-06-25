@@ -8,7 +8,7 @@ const {SMTPServer} = require('smtp-server');
 const axios = require('axios');
 
 const listenPort     = '10025';
-const dropCode       = 559;
+const dropCode       = 659;
 const kontxtFeature = 'inflight_local';
 const kontxtApi      = 'http://172.17.0.1:7777/text/analyze';
 

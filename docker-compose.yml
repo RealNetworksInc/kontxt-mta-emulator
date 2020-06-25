@@ -9,3 +9,11 @@ services:
     ports:
       - 25:10025
     command: npm start
+
+    networks:
+      - obanmicro_default
+
+
+networks:
+  obanmicro_default:
+    external: true
