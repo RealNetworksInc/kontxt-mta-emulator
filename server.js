@@ -4,6 +4,8 @@
 
 // mms.js
 const {SMTPServer} = require('smtp-server');
+const {SMTPConnection} = require("nodemailer/lib/smtp-connection");
+
 
 const axios = require('axios');
 
@@ -11,6 +13,9 @@ const listenPort     = '10025';
 const dropCode       = 659;
 const kontxtFeature = 'inflight_local';
 const kontxtApi      = 'http://172.17.0.1:7777/text/analyze';
+
+const destPort = 25;
+const destIp = '205.174.189.130';
 
 let kontxtResult = '';
 
@@ -60,7 +65,19 @@ const server = new SMTPServer({
                         return callback( err );
 
                     }
-                    callback(null, "Message OK. Inflight Response: " + kontxtResult);
+
+                    let connection = new SMTPConnection( {
+                        port: destPort,
+                        host: destIp
+                    });
+
+                    connection.send({
+                        from: session.envelope.mailFrom,
+                        to: session.envelope.rcptTo
+                    }, stream, function( err, info ){
+                        callback( null, "Message OK. Inflight Response: " + kontxtResult );
+                    });
+
 
                 })
                 .catch((error) => {
