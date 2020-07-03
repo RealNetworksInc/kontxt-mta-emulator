@@ -7,7 +7,7 @@ services:
       - .:/usr/src/app
       - /usr/src/app/node_modules
     ports:
-      - 25:10025
+      - 443:10025
     command: npm start
 
     networks:
