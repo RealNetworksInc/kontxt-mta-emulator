@@ -10,7 +10,7 @@
 
 # production
 /build
-/log/app.log
+/log/all-the-logs.log
 
 # misc
 .idea/

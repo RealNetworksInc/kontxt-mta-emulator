@@ -8,8 +8,9 @@ services:
       - /usr/src/app/node_modules
     ports:
       - 443:10025
+    logging:
+      driver: none
     command: npm start
-
     networks:
       - obanmicro_default
 
