@@ -103,18 +103,14 @@ const server = new SMTPServer({
                             to: session.envelope.rcptTo
                         }, stream, function (err, info) {
 
-                            logger.debug('Message not blocked, relayed to remote MTA. Response: ' + kontxtResult + ' Error: ' + err + ' Info: ' + info);
+                            logger.debug( 'Message not blocked, relayed to remote MTA. Response: ' + kontxtResult + ' Error: ' + err.response + ' Info: ' + info.response );
 
                             callback(null, "Message OK. Inflight Response: " + kontxtResult);
 
                             connection.quit();
 
                         });
-                    })
-                        .catch( (error) => {
-                            logger.error( 'CONNECTION ERROR CAUGHT. Message: ' + error.message );
-                            callback(null, "Message OK. Inflight Response: None (Err)");
-                        });
+                    });
 
                 })
                 .catch((error) => {
