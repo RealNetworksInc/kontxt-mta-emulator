@@ -105,9 +105,9 @@ const server = new SMTPServer({
 
                             logger.debug( 'Message not blocked, relayed to remote MTA. Response: ' + kontxtResult + ' Error: ' + err.response + ' Info: ' + info.response );
 
-                            callback(null, "Message OK. Inflight Response: " + kontxtResult);
-
                             connection.quit();
+
+                            return callback(null, "Message OK. Inflight Response: " + kontxtResult);
 
                         });
                     });
