@@ -4,7 +4,7 @@
 
 // mms.js
 const {SMTPServer} = require('smtp-server');
-const {SMTPConnection} = require('nodemailer/lib/smtp-connection');
+const SMTPConnection = require('nodemailer/lib/smtp-connection');
 const log4js = require('log4js');
 const axios = require('axios');
 
@@ -13,10 +13,17 @@ const dropCode       = 659;
 const maxClients     = 100;
 const maxSize        = 20 * 1024 * 1024; // 20 MB
 const kontxtFeature  = 'inflight_local';
-const kontxtApi      = 'http://172.17.0.1:7777/text/analyze'; // Local container for analysis
 
-const destIp = '205.174.189.130';  // Relay for successful message, non blocked from inflight
-const destPort = 25;
+// Production settings
+const kontxtApi      = 'http://172.17.0.1:7777/text/analyze'; // Local container for analysis 172.17.0.1
+
+const destIp         = '205.174.189.130';  // Relay for successful message, non blocked from inflight
+const destPort       = 25;
+
+// Local host development
+// const kontxtApi      = 'http://192.168.65.2:7777/text/analyze'; // Local container for analysis 172.17.0.1
+//const destIp = '192.168.65.2';  // ping host.docker.internal from inside the docker container to get host IP
+//const destPort = 11025;
 
 let kontxtResult = '';
 let concatStream = '';
@@ -75,25 +82,33 @@ const server = new SMTPServer({
                         err.responseCode = dropCode;
                         return callback( err );
 
-
                     }
 
                     let connection = new SMTPConnection( {
                         port: destPort,
-                        host: destIp
+                        host: destIp,
+                        secure: false,
+                        ignoreTLS: true,
+                        connectionTimeout: 5000,
+                        debug: true,
+                        name: 'mms.relay.kontxt.cloud'
                     });
 
-                    connection.send({
-                        from: session.envelope.mailFrom,
-                        to: session.envelope.rcptTo
-                    }, stream, function( err, info ) {
+                    connection.connect(() => {
 
-                        logger.debug( 'Message NOT blocked by Inflight. Response: ' + kontxtResult + ' Error: ' + err + ' Info: ' + info  );
+                        connection.send({
+                            from: session.envelope.mailFrom,
+                            to: session.envelope.rcptTo
+                        }, stream, function (err, info) {
 
-                        callback( null, "Message OK. Inflight Response: " + kontxtResult );
+                            logger.debug('Message NOT blocked by Inflight. Response: ' + kontxtResult + ' Error: ' + err + ' Info: ' + info);
 
+                            callback(null, "Message OK. Inflight Response: " + kontxtResult);
+
+                            connection.quit();
+
+                        });
                     });
-
 
                 })
                 .catch((error) => {
