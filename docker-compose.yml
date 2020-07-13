@@ -2,6 +2,7 @@ version: '3'
 
 services:
   mms:
+    restart: always
     build: .
     volumes:
       - .:/usr/src/app
