@@ -16,16 +16,16 @@ const kontxtFeature  = 'inflight_local';
 
 // Production settings
 const kontxtApi      = 'http://172.17.0.1:7777/text/analyze'; // Local container for analysis 172.17.0.1
-
 const destIp         = '205.174.189.130';  // Relay for successful message, non blocked from inflight
 const destPort       = 25;
 
 // Local host development
-// const kontxtApi      = 'http://192.168.65.2:7777/text/analyze'; // Local container for analysis 172.17.0.1
+//const kontxtApi      = 'http://192.168.65.2:7777/text/analyze'; // Local container for analysis
 //const destIp = '192.168.65.2';  // ping host.docker.internal from inside the docker container to get host IP
 //const destPort = 11025;
 
 let kontxtResult = '';
+let kontxtContent = '';
 let concatStream = '';
 
 log4js.configure({
@@ -56,6 +56,9 @@ const server = new SMTPServer({
 
         stream.on('end', () => {
 
+            logger.debug( 'Payload features: ' + kontxtFeature );
+            logger.debug( 'Payload rawSmtp: ' + concatStream );
+
             axios.post( kontxtApi, {
 
                 features: kontxtFeature,
@@ -64,13 +67,17 @@ const server = new SMTPServer({
             } )
                 .then((res) => {
 
+                    concatStream = '';
+
                     if( undefined !== res.data.data[0]  ) {
 
                         const inflightResults = res.data.data[0]['inflight_local_results'];
 
                         kontxtResult = inflightResults.block;
+                        kontxtContent = inflightResults.text;
 
                         logger.debug( 'Raw block result from payload: ' + kontxtResult );
+                        logger.debug( 'Raw text result from payload: ' + kontxtContent );
 
                     }
 
@@ -94,6 +101,12 @@ const server = new SMTPServer({
                         name: 'mms.relay.kontxt.cloud'
                     });
 
+                    // keep process running on any exception, especially remote MTA relay! -mjb
+                    connection.on( 'error', function ( err ) {
+                        logger.error( 'SMTP POST ERROR CAUGHT. Message: ' + err );
+                        callback( null, "Message OK but MTA likely down." );
+                    });
+
                     connection.connect(() => {
 
                         logger.error( 'CONNECTION ESTABLISHED TO REMOTE MTA' );
@@ -103,11 +116,11 @@ const server = new SMTPServer({
                             to: session.envelope.rcptTo
                         }, stream, function (err, info) {
 
-                            logger.debug( 'Message not blocked, relayed to remote MTA. Response: ' + kontxtResult + ' Error: ' + err.response + ' Info: ' + info.response );
+                            logger.debug( 'Message not blocked, relayed to remote MTA. Response: ' + kontxtResult );
 
                             connection.quit();
 
-                            return callback(null, "Message OK. Inflight Response: " + kontxtResult);
+                            return callback( null, "Message OK. Inflight Response: " + kontxtResult );
 
                         });
                     });
