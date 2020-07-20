@@ -67,8 +67,6 @@ const server = new SMTPServer({
             } )
                 .then((res) => {
 
-                    concatStream = '';
-
                     if( undefined !== res.data.data[0]  ) {
 
                         const inflightResults = res.data.data[0]['inflight_local_results'];
@@ -84,7 +82,8 @@ const server = new SMTPServer({
                     if (kontxtResult === 'Blocked') {
 
                         logger.debug( 'Message blocked by Inflight. Response: ' + kontxtResult );
-
+                        concatStream = '';
+                        
                         let err = new Error( 'Message blocked. Inflight Response: ' + kontxtResult );
                         err.responseCode = dropCode;
                         return callback( err );
@@ -104,35 +103,34 @@ const server = new SMTPServer({
                     // keep process running on any exception, especially remote MTA relay! -mjb
                     connection.on( 'error', function ( err ) {
                         logger.error( 'SMTP POST ERROR CAUGHT. Message: ' + err );
+                        concatStream = '';
                         callback( null, "Message OK but MTA likely down." );
                     });
 
                     connection.connect(() => {
 
-                        logger.error( 'CONNECTION ESTABLISHED TO REMOTE MTA' );
+                        logger.info( 'CONNECTION ESTABLISHED TO REMOTE MTA' );
 
                         connection.send({
                             from: session.envelope.mailFrom,
                             to: session.envelope.rcptTo
-                        }, stream, function (err, info) {
+                        }, concatStream, function (err, info) {
 
-                            logger.debug( 'Message not blocked, relayed to remote MTA. Response: ' + kontxtResult );
+                            logger.info( 'Message not blocked, relayed to remote MTA. Response: ' + kontxtResult );
 
                             connection.quit();
-
+                            concatStream = '';
                             return callback( null, "Message OK. Inflight Response: " + kontxtResult );
 
                         });
                     });
-
                 })
                 .catch((error) => {
                     logger.error( 'SMTP POST ERROR CAUGHT. Message: ' + error.message );
+                    concatStream = '';
                     callback(null, "Message OK. Inflight Response: None (Err)");
                 });
-
         });
-
     },
 });
 
