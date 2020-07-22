@@ -15,6 +15,15 @@ To run this locally, run:
 
 `npm start`
 
+### Test
+For sanity test, use the mms-test-automate script available in the scripts folder,
+
+`tar -xvfz mms-test-automate.tar.gz`
+`cd mms-test-automate`
+`./mms-telnet-automate.sh message.txt | telnet`
+
+Different messages can be used by changing or using a new message.txt file
+
 ### Production
 Build Docker image
 
