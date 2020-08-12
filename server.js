@@ -12,7 +12,7 @@ const listenPort     = '10025';
 const dropCode       = 659;
 const maxClients     = 100;
 const maxSize        = 20 * 1024 * 1024; // 20 MB
-const kontxtFeature  = 'inflight_local';
+const kontxtFeature  = 'inflight';
 
 // Production settings
 const kontxtApi      = 'http://172.17.0.1:7777/text/analyze'; // Local container for analysis 172.17.0.1
@@ -83,7 +83,7 @@ const server = new SMTPServer({
 
                         logger.debug( 'Message blocked by Inflight. Response: ' + kontxtResult );
                         concatStream = '';
-                        
+
                         let err = new Error( 'Message blocked. Inflight Response: ' + kontxtResult );
                         err.responseCode = dropCode;
                         return callback( err );
