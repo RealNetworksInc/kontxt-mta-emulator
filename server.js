@@ -16,7 +16,7 @@ const kontxtFeature  = 'inflight';
 
 // Production settings
 const kontxtApi      = 'http://172.17.0.1:7777/text/analyze'; // Local container for analysis 172.17.0.1
-const destIp         = '205.174.189.130';  // Relay for successful message, non blocked from inflight
+const destIp         = '172.17.0.1';  // Relay for successful message, non blocked from inflight
 const destPort       = 25;
 
 // Local host development
@@ -69,17 +69,15 @@ const server = new SMTPServer({
 
                     if( undefined !== res.data.data[0]  ) {
 
-                        const inflightResults = res.data.data[0]['inflight_local_results'];
+                        const inflightResults = res.data.data[0]['inflight_results'];
 
-                        kontxtResult = inflightResults.block;
-                        kontxtContent = inflightResults.text;
+                        kontxtResult = inflightResults.spam;
 
                         logger.debug( 'Raw block result from payload: ' + kontxtResult );
-                        logger.debug( 'Raw text result from payload: ' + kontxtContent );
 
                     }
 
-                    if (kontxtResult === 'Blocked') {
+                    if (kontxtResult === true ) {
 
                         logger.debug( 'Message blocked by Inflight. Response: ' + kontxtResult );
                         concatStream = '';
