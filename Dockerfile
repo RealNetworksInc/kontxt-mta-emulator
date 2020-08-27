@@ -6,7 +6,8 @@ COPY package*.json ./
 
 RUN apt -y update && \
     apt -y install vim \
-    telnet
+    telnet \
+    tcpdump
 
 RUN npm ci --only=production
 
