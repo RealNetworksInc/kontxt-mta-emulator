@@ -33,11 +33,11 @@ log4js.configure({
         everything: { type: 'file', filename: 'log/all-the-logs.log', maxLogSize: 10485760, backups: 3, compress: true }
     },
     categories: {
-        default: { appenders: [ 'everything' ], level: 'debug'}
+        default: { appenders: [ 'everything' ], level: 'info'}
     }
 });
 const logger = log4js.getLogger();
-logger.level = "debug";
+logger.level = "info";
 
 const server = new SMTPServer({
     // disable STARTTLS to allow authentication in clear text mode
@@ -79,7 +79,7 @@ const server = new SMTPServer({
 
                     if (kontxtResult === true ) {
 
-                        logger.debug( 'Message blocked by Inflight. Response: ' + kontxtResult );
+                        logger.info( 'Message blocked by Inflight. Response: ' + kontxtResult );
                         concatStream = '';
 
                         let err = new Error( 'Message blocked. Inflight Response: ' + kontxtResult );
@@ -94,7 +94,7 @@ const server = new SMTPServer({
                         secure: false,
                         ignoreTLS: true,
                         connectionTimeout: 5000,
-                        debug: true,
+                        debug: false,
                         name: 'mms.relay.kontxt.cloud'
                     });
 
@@ -126,7 +126,7 @@ const server = new SMTPServer({
                 .catch((error) => {
                     logger.error( 'SMTP POST ERROR CAUGHT. Message: ' + error.message );
                     concatStream = '';
-                    callback(null, "Message OK. Inflight Response: None (Err)");
+                    callback(null, "Message OK. Inflight Response: None (Could not connect to ObanMicro API)");
                 });
         });
     },
