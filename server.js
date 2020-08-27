@@ -10,7 +10,7 @@ const axios = require('axios');
 
 const listenPort     = '10025';
 const dropCode       = 659;
-const maxClients     = 100;
+const maxClients     = 75;
 const maxSize        = 20 * 1024 * 1024; // 20 MB
 const kontxtFeature  = 'inflight';
 

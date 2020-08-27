@@ -8,7 +8,7 @@ services:
       - .:/usr/src/app
       - /usr/src/app/node_modules
     ports:
-      - 443:10025
+      - 25:10025
     #logging:
      # driver: none
     command: npm start
