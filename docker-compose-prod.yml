@@ -7,7 +7,7 @@ services:
     volumes:
       - ./server.js:/usr/src/app/server.js
     ports:
-      - 443:10025
+      - 25:10025
     #logging:
      # driver: none
     command: npm start
