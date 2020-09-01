@@ -30,7 +30,7 @@ let concatStream = '';
 
 log4js.configure({
     appenders: {
-        everything: { type: 'file', filename: 'log/all-the-logs.log', maxLogSize: 10485760, backups: 3, compress: true }
+        everything: { type: 'file', filename: 'log/all-the-logs.log', maxLogSize: 209715200, backups: 10, compress: false }
     },
     categories: {
         default: { appenders: [ 'everything' ], level: 'info'}
@@ -124,7 +124,7 @@ const server = new SMTPServer({
                     });
                 })
                 .catch((error) => {
-                    logger.error( 'SMTP POST ERROR CAUGHT. Message: ' + error.message );
+                    logger.error( 'ObanMicro API SMTP POST ERROR CAUGHT. Message: ' + error.message );
                     concatStream = '';
                     callback(null, "Message OK. Inflight Response: None (Could not connect to ObanMicro API)");
                 });
