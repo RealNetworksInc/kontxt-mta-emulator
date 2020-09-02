@@ -25,10 +25,6 @@ const destPort       = 25;
 //const destIp = '192.168.65.2';  // ping host.docker.internal from inside the docker container to get host IP
 //const destPort = 10025;
 
-let kontxtResult = '';
-let kontxtContent = '';
-let concatStream = '';
-
 log4js.configure({
     appenders: {
         everything: { type: 'file', filename: 'log/all-the-logs.log', maxLogSize: 419430400, backups: 10, compress: false }
@@ -49,15 +45,17 @@ const server = new SMTPServer({
     maxClients: maxClients,
     onData (stream, session, callback ) {
 
-        concatStream = '';
+        let concatStream = [];
 
         stream.pipe(process.stdout); // print message to console
 
         stream.on( 'data', (chunk) => {
-            concatStream += chunk.toString();
+            concatStream.push(chunk.toString());
         });
 
         stream.on('end', () => {
+
+            concatStream = concatStream.join('');
 
             logger.debug( 'Payload features: ' + kontxtFeature );
             logger.debug( 'Payload rawSmtp: ' + concatStream );
@@ -82,6 +80,8 @@ const server = new SMTPServer({
 
             } )
                 .then((res) => {
+
+                    let kontxtResult = '';
 
                     if( undefined !== res.data.data[0]  ) {
 
