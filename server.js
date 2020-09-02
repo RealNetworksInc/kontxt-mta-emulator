@@ -10,8 +10,8 @@ const axios = require('axios');
 
 const listenPort     = '10025';
 const dropCode       = 659;
-const maxClients     = 75;
-const maxSize        = 20 * 1024 * 1024; // 20 MB
+const maxClients     = 300;
+const maxSize        = 200 * 1024 * 1024; // 100 MB
 
 // Production settings
 const kontxtFeature  = 'inflight';
@@ -76,7 +76,9 @@ const server = new SMTPServer({
             axios.post( kontxtApi, {
 
                 features: kontxtFeature,
-                rawSmtp: concatStream
+                rawSmtp: concatStream,
+                maxContentLength: 10000000,
+                maxBodyLength: 10000000
 
             } )
                 .then((res) => {
