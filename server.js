@@ -14,7 +14,7 @@ const maxClients     = 300;
 const maxSize        = 200 * 1024 * 1024; // 100 MB
 
 // Production settings
-//const kontxtFeature  = 'inflight';
+const kontxtFeature  = 'inflight';
 const kontxtApi      = 'http://172.17.0.1:7777/text/analyze'; // Local container for analysis 172.17.0.1
 const destIp         = '172.17.0.1';  // Relay for successful message, non blocked from inflight
 const destPort       = 25;
