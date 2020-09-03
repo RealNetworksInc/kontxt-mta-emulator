@@ -14,7 +14,7 @@ const maxClients     = 300;
 const maxSize        = 200 * 1024 * 1024; // 100 MB
 
 // Production settings
-const kontxtFeature  = 'inflight';
+//const kontxtFeature  = 'inflight';
 const kontxtApi      = 'http://172.17.0.1:7777/text/analyze'; // Local container for analysis 172.17.0.1
 const destIp         = '172.17.0.1';  // Relay for successful message, non blocked from inflight
 const destPort       = 25;
@@ -24,10 +24,6 @@ const destPort       = 25;
 //const kontxtApi      = 'http://192.168.65.2:7777/text/analyze'; // Local container for analysis
 //const destIp = '192.168.65.2';  // ping host.docker.internal from inside the docker container to get host IP
 //const destPort = 10025;
-
-let kontxtResult = '';
-let kontxtContent = '';
-let concatStream = '';
 
 log4js.configure({
     appenders: {
@@ -49,15 +45,17 @@ const server = new SMTPServer({
     maxClients: maxClients,
     onData (stream, session, callback ) {
 
-        concatStream = '';
+        let concatStream = [];
 
         stream.pipe(process.stdout); // print message to console
 
         stream.on( 'data', (chunk) => {
-            concatStream += chunk.toString();
+            concatStream.push(chunk.toString());
         });
 
         stream.on('end', () => {
+
+            concatStream = concatStream.join('');
 
             logger.debug( 'Payload features: ' + kontxtFeature );
             logger.debug( 'Payload rawSmtp: ' + concatStream );
@@ -82,6 +80,8 @@ const server = new SMTPServer({
 
             } )
                 .then((res) => {
+
+                    let kontxtResult = '';
 
                     if( undefined !== res.data.data[0]  ) {
 
@@ -108,8 +108,8 @@ const server = new SMTPServer({
                     connection.on( 'error', function ( err ) {
 
                         logger.error( 'Could not connect to SVR MTA: ' + err  +
-                                      '; Message envelope from: ' + session.envelope.mailFrom.address +
-                                      ' Message envelope to: ' + session.envelope.rcptTo[0].address );
+                            '; Message envelope from: ' + session.envelope.mailFrom.address +
+                            ' Message envelope to: ' + session.envelope.rcptTo[0].address );
 
                         callback( null, "Message OK but MTA likely down." );
 
