@@ -66,7 +66,7 @@ const server = new SMTPServer({
             logger.info( `Message ${computeHash(rawSmtp)} received` );
 
             logger.debug( 'Payload features: ' + kontxtFeature );
-            logger.debug( 'Payload rawSmtp: ' + rawSmtp );
+            logger.debug( 'Payload rawSmtp: ' + rawSmtp.toString() );
 
             //establish connection to SVR remote MTA
             let connection = new SMTPConnection( {
