@@ -7,6 +7,7 @@ const {SMTPServer} = require('smtp-server');
 const SMTPConnection = require('nodemailer/lib/smtp-connection');
 const log4js = require('log4js');
 const axios = require('axios');
+const crypto = require('crypto')
 
 const listenPort     = '10025';
 const dropCode       = 659;
@@ -36,6 +37,10 @@ log4js.configure({
 const logger = log4js.getLogger();
 logger.level = "info";
 
+function computeHash(data) {
+    return crypto.createHash('sha256').update(data).digest('hex');
+}
+
 const server = new SMTPServer({
     // disable STARTTLS to allow authentication in clear text mode
     banner: 'Welcome to the KONTXT SMTP MTA Emulator',
@@ -45,20 +50,23 @@ const server = new SMTPServer({
     maxClients: maxClients,
     onData (stream, session, callback ) {
 
-        let concatStream = [];
+        let chunks = [];
 
         stream.pipe(process.stdout); // print message to console
 
         stream.on( 'data', (chunk) => {
-            concatStream.push(chunk.toString());
+            chunks.push(chunk);
         });
 
         stream.on('end', () => {
 
-            concatStream = concatStream.join('');
+            // keep message AS IS in raw format
+            let rawSmtp = Buffer.concat(chunks)
+
+            logger.info( `Message ${computeHash(rawSmtp)} received` );
 
             logger.debug( 'Payload features: ' + kontxtFeature );
-            logger.debug( 'Payload rawSmtp: ' + concatStream );
+            logger.debug( 'Payload rawSmtp: ' + rawSmtp );
 
             //establish connection to SVR remote MTA
             let connection = new SMTPConnection( {
@@ -74,7 +82,9 @@ const server = new SMTPServer({
             axios.post( kontxtApi, {
 
                 features: kontxtFeature,
-                rawSmtp: concatStream,
+                // convert message to string assuming (default) utf8 encoding 
+                // (a groundless assumption, but we need to satisfy kontxt API)
+                rawSmtp: rawSmtp.toString(),
                 maxContentLength: 10000000,
                 maxBodyLength: 10000000
 
@@ -95,6 +105,8 @@ const server = new SMTPServer({
 
                     if (kontxtResult === true ) {
 
+                        logger.info( `Message ${computeHash(rawSmtp)} blocked by Kontxt` );
+
                         logger.info( 'Message blocked by Inflight. Response: ' + kontxtResult +
                             '; Message envelope from: ' + session.envelope.mailFrom.address +
                             ' Message envelope to: ' + session.envelope.rcptTo[0].address );
@@ -105,7 +117,11 @@ const server = new SMTPServer({
 
                     }
 
+                    logger.info( `Message ${computeHash(rawSmtp)} allowed by Kontxt` );
+
                     connection.on( 'error', function ( err ) {
+
+                        logger.info( `Message ${computeHash(rawSmtp)} discarded, MT likely down` );
 
                         logger.error( 'Could not connect to SVR MTA: ' + err  +
                                       '; Message envelope from: ' + session.envelope.mailFrom.address +
@@ -122,11 +138,13 @@ const server = new SMTPServer({
                         connection.send({
                             from: session.envelope.mailFrom,
                             to: session.envelope.rcptTo
-                        }, concatStream, function (err, info) {
+                        }, rawSmtp, function (err, info) {
 
                             logger.info( 'Message not blocked, relayed to remote MTA. Response: ' + kontxtResult +
                                 '; Message envelope from: ' + session.envelope.mailFrom.address +
                                 ' Message envelope to: ' + session.envelope.rcptTo[0].address );
+
+                            logger.info( `Message ${computeHash(rawSmtp)} forwarded to MTA` );
 
                             connection.quit();
                             return callback( null, "Message OK. Inflight Response: " + kontxtResult );
@@ -137,9 +155,13 @@ const server = new SMTPServer({
                 .catch((error) => {
                     logger.error( 'ObanMicro API SMTP POST ERROR CAUGHT, sending message on to SVR MTA. Message: ' + error.message );
 
+                    logger.info( `Message ${computeHash(rawSmtp)} allowed, Kontxt failed` );
+
                     // something is wrong with oban api, so let's send the message back to SVR MTA
 
                     connection.on( 'error', function ( err ) {
+
+                        logger.info( `Message ${computeHash(rawSmtp)} discarded, MT likely down` );
 
                         logger.error( 'Caught ObanMicro API Error :: Could not connect to SVR MTA: ' + err  +
                             '; Message envelope from: ' + session.envelope.mailFrom.address +
@@ -156,11 +178,13 @@ const server = new SMTPServer({
                         connection.send({
                             from: session.envelope.mailFrom,
                             to: session.envelope.rcptTo
-                        }, concatStream, function (err, info) {
+                        }, rawSmtp, function (err, info) {
 
                             logger.error( 'Caught ObanMicro API Error: relayed to remote MTA.' +
                                 '; Message envelope from: ' + session.envelope.mailFrom.address +
                                 '; Message envelope to: ' + session.envelope.rcptTo[0].address );
+
+                            logger.info( `Message ${computeHash(rawSmtp)} forwarded to MTA` );
 
                             connection.quit();
 
