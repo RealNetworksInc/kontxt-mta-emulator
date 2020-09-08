@@ -7,10 +7,12 @@ const {SMTPServer} = require('smtp-server');
 const SMTPConnection = require('nodemailer/lib/smtp-connection');
 const log4js = require('log4js');
 const axios = require('axios');
-const crypto = require('crypto')
+const crypto = require('crypto');
 
 const listenPort     = '10025';
 const dropCode       = 659;
+const relayDownCode  = 512; // thrown in case SVR remote MTA relay is down, should force incoming relay to retry
+const hashCheckCode  = 554;
 const maxClients     = 300;
 const maxSize        = 100 * 1024 * 1024; // 100 MB
 
@@ -20,7 +22,7 @@ const kontxtApi      = 'http://172.17.0.1:7777/text/analyze'; // Local container
 const destIp         = '172.17.0.1';  // Relay for successful message, non blocked from inflight
 const destPort       = 25;
 
-// Local host development; setup an ehlo service locally on the following port
+// Local host development; setup an ehlo service locally on the following destPort
 //const kontxtFeature  = 'inflight_local';
 //const kontxtApi      = 'http://192.168.65.2:7777/text/analyze'; // Local container for analysis
 //const destIp = '192.168.65.2';  // ping host.docker.internal from inside the docker container to get host IP
@@ -41,6 +43,10 @@ function computeHash(data) {
     return crypto.createHash('sha256').update(data).digest('hex');
 }
 
+function checkHash(initial, current) {
+    return initial === current;
+}
+
 const server = new SMTPServer({
     // disable STARTTLS to allow authentication in clear text mode
     banner: 'Welcome to the KONTXT SMTP MTA Emulator',
@@ -51,6 +57,7 @@ const server = new SMTPServer({
     onData (stream, session, callback ) {
 
         let chunks = [];
+        let smtpEntryHash = '';
 
         stream.pipe(process.stdout); // print message to console
 
@@ -64,6 +71,8 @@ const server = new SMTPServer({
             let rawSmtp = Buffer.concat(chunks)
 
             logger.info( `Message ${computeHash(rawSmtp)} received` );
+
+            smtpEntryHash = computeHash(rawSmtp);
 
             logger.debug( 'Payload features: ' + kontxtFeature );
             logger.debug( 'Payload rawSmtp: ' + rawSmtp.toString() );
@@ -121,13 +130,15 @@ const server = new SMTPServer({
 
                     connection.on( 'error', function ( err ) {
 
-                        logger.info( `Message ${computeHash(rawSmtp)} discarded, MT likely down` );
+                        logger.info( `Message ${computeHash(rawSmtp)} needs to be retried, MTA likely down` );
 
                         logger.error( 'Could not connect to SVR MTA: ' + err  +
                             '; Message envelope from: ' + session.envelope.mailFrom.address +
                             ' Message envelope to: ' + session.envelope.rcptTo[0].address );
 
-                        callback( null, "Message OK but MTA likely down." );
+                        err = new Error( 'Message could not be sent, remote relay down. Inflight Response: ' + kontxtResult );
+                        err.responseCode = hashCheckCode;
+                        return callback( err );
 
                     });
 
@@ -135,21 +146,31 @@ const server = new SMTPServer({
 
                         logger.info( 'CONNECTION ESTABLISHED TO REMOTE MTA' );
 
-                        connection.send({
-                            from: session.envelope.mailFrom,
-                            to: session.envelope.rcptTo
-                        }, rawSmtp, function (err, info) {
+                        if( checkHash( smtpEntryHash, computeHash(rawSmtp) ) ) {
 
-                            logger.info( 'Message not blocked, relayed to remote MTA. Response: ' + kontxtResult +
-                                '; Message envelope from: ' + session.envelope.mailFrom.address +
-                                ' Message envelope to: ' + session.envelope.rcptTo[0].address );
+                            connection.send({
+                                from: session.envelope.mailFrom,
+                                to: session.envelope.rcptTo
+                            }, rawSmtp, function (err, info) {
 
-                            logger.info( `Message ${computeHash(rawSmtp)} forwarded to MTA` );
+                                logger.info('Message not blocked, relayed to remote MTA. Response: ' + kontxtResult +
+                                    '; Message envelope from: ' + session.envelope.mailFrom.address +
+                                    ' Message envelope to: ' + session.envelope.rcptTo[0].address);
 
-                            connection.quit();
-                            return callback( null, "Message OK. Inflight Response: " + kontxtResult );
+                                logger.info(`Message ${computeHash(rawSmtp)} forwarded to MTA`);
 
-                        });
+                                connection.quit();
+                                return callback(null, "Message OK. Inflight Response: " + kontxtResult);
+
+                            });
+                        } else {
+                            logger.error( 'Hash check failure. Message not relayed. Entry: ' + smtpEntryHash + ' Current: ' + computeHash(rawSmtp) );
+
+                            let err = new Error( 'Hash check failure. Message not relayed.');
+                            err.responseCode = relayDownCode;
+                            return callback( err );
+
+                        }
                     });
                 })
                 .catch((error) => {
@@ -171,27 +192,36 @@ const server = new SMTPServer({
 
                     });
 
-                    connection.connect(() => {
+                    if( checkHash( smtpEntryHash, computeHash(rawSmtp) ) ) {
 
-                        logger.error( 'Caught ObanMicro API Error: CONNECTION ESTABLISHED TO REMOTE MTA ' );
+                        connection.connect(() => {
 
-                        connection.send({
-                            from: session.envelope.mailFrom,
-                            to: session.envelope.rcptTo
-                        }, rawSmtp, function (err, info) {
+                            logger.error('Caught ObanMicro API Error: CONNECTION ESTABLISHED TO REMOTE MTA ');
 
-                            logger.error( 'Caught ObanMicro API Error: relayed to remote MTA.' +
-                                '; Message envelope from: ' + session.envelope.mailFrom.address +
-                                '; Message envelope to: ' + session.envelope.rcptTo[0].address );
+                            connection.send({
+                                from: session.envelope.mailFrom,
+                                to: session.envelope.rcptTo
+                            }, rawSmtp, function (err, info) {
 
-                            logger.info( `Message ${computeHash(rawSmtp)} forwarded to MTA` );
+                                logger.error('Caught ObanMicro API Error: relayed to remote MTA.' +
+                                    '; Message envelope from: ' + session.envelope.mailFrom.address +
+                                    '; Message envelope to: ' + session.envelope.rcptTo[0].address);
 
-                            connection.quit();
+                                logger.info(`Message ${computeHash(rawSmtp)} forwarded to MTA`);
 
-                            return callback( null, 'Message OK.' );
+                                connection.quit();
 
+                                return callback(null, 'Message OK.');
+
+                            });
                         });
-                    });
+                    } else {
+                        logger.error( 'Hash check failure. Message not relayed. Entry: ' + smtpEntryHash + ' Current: ' + computeHash(rawSmtp) );
+
+                        let err = new Error( 'Hash check failure. Message not relayed.');
+                        err.responseCode = hashCheckCode;
+                        return callback( err );
+                    }
 
                 });
         });
