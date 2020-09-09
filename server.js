@@ -12,7 +12,7 @@ const constants = require('./constants');
 
 log4js.configure({
     appenders: {
-        everything: { type: 'file', filename: 'log/all-the-logs.log', maxLogSize: 419430400, backups: 10, compress: false }
+        everything: { type: 'dateFile', filename: 'log/all-the-logs.log' }
     },
     categories: {
         default: { appenders: [ 'everything' ], level: constants.LOGLEVEL }
