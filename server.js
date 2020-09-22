@@ -18,8 +18,11 @@ log4js.configure({
         default: { appenders: [ 'everything' ], level: constants.LOGLEVEL }
     }
 });
+
 const logger = log4js.getLogger();
 logger.level = constants.LOGLEVEL;
+
+let connCount = 0;
 
 function computeHash(data) {
     return crypto.createHash('sha256').update(data).digest('hex');
@@ -36,6 +39,14 @@ const server = new SMTPServer({
     logger: false,
     size: constants.MAXCLIENTS,
     maxClients: constants.MAXSIZE,
+    onConnect ( session, callback ) {
+        connCount++;
+        logger.info( 'Number of concurrent connections: ' + connCount );
+        return callback();
+    },
+    onClose( session ) {
+        connCount--;
+    },
     onData (stream, session, callback ) {
 
         let chunks = [];
