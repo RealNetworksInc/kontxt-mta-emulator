@@ -6,12 +6,12 @@ pipeline {
     }
     parameters {
         listGitBranches(
-            branchFilter: '(.*)release/(.*)',
+            branchFilter: '(.*)hotfix|release/(.*)',
             defaultValue: '',
             sortMode: 'DESCENDING_SMART',
             name: 'BRANCH_SELECT',
             type: 'BRANCH',
-            remoteURL: 'git@gitlab.kontxt.cloud:realnyc/kontxt.git',
+            remoteURL: 'git@gitlab.kontxt.cloud:docker/kontxt-smtp-emulator.git',
             credentialsId: '518101fd-f8bc-4cd9-be3d-5ad1923621dc')
     }
     stages {
