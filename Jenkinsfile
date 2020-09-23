@@ -6,7 +6,7 @@ pipeline {
     }
     parameters {
         listGitBranches(
-            branchFilter: '(.*)hotfix|release/(.*)',
+            branchFilter: '(.*)[hotfix|release]/(.*)',
             defaultValue: '',
             sortMode: 'DESCENDING_SMART',
             name: 'BRANCH_SELECT',
