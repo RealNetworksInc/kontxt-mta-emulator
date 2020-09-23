@@ -8,8 +8,8 @@ services:
       - ./server.js:/usr/src/app/server.js
     ports:
       - 25:10025
-    #logging:
-     # driver: none
+    logging:
+      driver: none
     command: npm start
     networks:
       - obanmicro_default
