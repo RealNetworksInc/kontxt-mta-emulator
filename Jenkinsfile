@@ -23,7 +23,7 @@ pipeline {
                 ''',returnStdout: true)
                 }                              
                 git url: 'git@gitlab.kontxt.cloud:docker/kontxt-smtp-emulator.git',
-                credentialsId: 'daf6978b-48a6-43bd-ad76-39767976f00d',
+                credentialsId: '518101fd-f8bc-4cd9-be3d-5ad1923621dc',
                 branch: "${FROM_BRANCH}"
             }
         }
