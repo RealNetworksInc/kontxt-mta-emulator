@@ -37,8 +37,8 @@ const server = new SMTPServer({
     banner: 'Welcome to the KONTXT SMTP MTA Emulator',
     disabledCommands: ['STARTTLS', 'AUTH'],
     logger: false,
-    size: constants.MAXCLIENTS,
-    maxClients: constants.MAXSIZE,
+    size: constants.MAXSIZE,
+    maxClients: constants.MAXCLIENTS,
     onConnect ( session, callback ) {
         connCount++;
         logger.info( 'Number of concurrent connections: ' + connCount );
