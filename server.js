@@ -45,7 +45,9 @@ const server = new SMTPServer({
         return callback();
     },
     onClose( session ) {
-        connCount--;
+        if( connCount >= 1 ) {
+            connCount--;
+        }
     },
     onData (stream, session, callback ) {
 
