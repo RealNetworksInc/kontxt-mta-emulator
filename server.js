@@ -46,7 +46,11 @@ const server = new SMTPServer({
     },
     onClose( session ) {
         if( connCount >= 1 ) {
+            // in case the load balancer health check doesn't open properly
             connCount--;
+        } else {
+            // reset connCount to 0 if negative as a result of loadbalancer health check
+            connCount = 0;
         }
     },
     onData (stream, session, callback ) {
