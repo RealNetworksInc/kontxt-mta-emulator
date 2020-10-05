@@ -123,7 +123,7 @@ const server = new SMTPServer({
 
                         let kontxtResult = '';
 
-                        if (undefined !== res.data.data[0]) {
+                        if ( undefined !== res.data.data[0] ) {
 
                             const inflightResults = res.data.data[0][constants.KONTXTFEATURE + '_results'];
 
@@ -133,7 +133,7 @@ const server = new SMTPServer({
 
                         }
 
-                        if (kontxtResult === true) {
+                        if ( kontxtResult === true ) {
 
                             logger.info(`Message ${computeHash(rawSmtp)} blocked by Kontxt`);
 
