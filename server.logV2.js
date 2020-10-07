@@ -36,7 +36,7 @@ const server = new SMTPServer({
     // disable STARTTLS to allow authentication in clear text mode
     banner: 'Welcome to the KONTXT SMTP MTA Emulator',
     disabledCommands: ['STARTTLS', 'AUTH'],
-    logger: false,
+    logger: true,
     size: constants.MAXSIZE,
     maxClients: constants.MAXCLIENTS,
     onConnect ( session, callback ) {
@@ -46,11 +46,7 @@ const server = new SMTPServer({
     },
     onClose( session ) {
         if( connCount >= 1 ) {
-            // in case the load balancer health check doesn't open properly
             connCount--;
-        } else {
-            // reset connCount to 0 if negative as a result of loadbalancer health check
-            connCount = 0;
         }
     },
     onData (stream, session, callback ) {
@@ -127,7 +123,7 @@ const server = new SMTPServer({
 
                         let kontxtResult = '';
 
-                        if ( undefined !== res.data.data[0] ) {
+                        if (undefined !== res.data.data[0]) {
 
                             const inflightResults = res.data.data[0][constants.KONTXTFEATURE + '_results'];
 
@@ -137,13 +133,13 @@ const server = new SMTPServer({
 
                         }
 
-                        if ( kontxtResult === true ) {
+                        if (kontxtResult === true) {
 
-                            logger.info(`Message ${computeHash(rawSmtp)} blocked by Kontxt`);
+                            logger.debug(`Message ${computeHash(rawSmtp)} blocked by Kontxt`);
 
-                            logger.info('Message blocked by Inflight. Response: ' + kontxtResult +
-                                '; Message envelope from: ' + session.envelope.mailFrom.address +
-                                ' Message envelope to: ' + session.envelope.rcptTo[0].address);
+                            logger.info(`Message ${computeHash(rawSmtp)} blocked by Inflight. Response: ` + kontxtResult +
+                                '; envelopeFrom: ' + session.envelope.mailFrom.address +
+                                ' envelopeTo: ' + session.envelope.rcptTo[0].address);
 
                             let err = new Error('Message blocked. Inflight Response: ' + kontxtResult);
                             err.responseCode = constants.DROPCODE;
@@ -158,8 +154,8 @@ const server = new SMTPServer({
                             logger.info(`Message ${computeHash(rawSmtp)} needs to be retried, MTA likely down`);
 
                             logger.error('Could not connect to SVR MTA: ' + err +
-                                '; Message envelope from: ' + session.envelope.mailFrom.address +
-                                ' Message envelope to: ' + session.envelope.rcptTo[0].address);
+                                '; envelopeFrom: ' + session.envelope.mailFrom.address +
+                                ' envelopeTo: ' + session.envelope.rcptTo[0].address);
 
                             err = new Error('Message could not be sent, remote relay down. Inflight Response: ' + kontxtResult);
                             err.responseCode = constants.HASHCHECKCODE;
@@ -169,7 +165,7 @@ const server = new SMTPServer({
 
                         connection.connect(() => {
 
-                            logger.info('CONNECTION ESTABLISHED TO REMOTE MTA');
+                            logger.debug('CONNECTION ESTABLISHED TO REMOTE MTA');
 
                             if (checkHash(smtpEntryHash, computeHash(rawSmtp))) {
 
@@ -178,11 +174,11 @@ const server = new SMTPServer({
                                     to: session.envelope.rcptTo
                                 }, rawSmtp, function (err, info) {
 
-                                    logger.info('Message not blocked, relayed to remote MTA. Response: ' + kontxtResult +
-                                        '; Message envelope from: ' + session.envelope.mailFrom.address +
-                                        ' Message envelope to: ' + session.envelope.rcptTo[0].address);
+                                    logger.info(`Message ${computeHash(rawSmtp)} relayed to remote MTA. Response: ` + kontxtResult +
+                                        '; envelopeFrom: ' + session.envelope.mailFrom.address +
+                                        ' envelopeTo: ' + session.envelope.rcptTo[0].address);
 
-                                    logger.info(`Message ${computeHash(rawSmtp)} forwarded to MTA`);
+                                    logger.debug(`Message ${computeHash(rawSmtp)} forwarded to MTA`);
 
                                     connection.quit();
                                     return callback(null, "Message OK. Inflight Response: " + kontxtResult);
@@ -229,8 +225,8 @@ const server = new SMTPServer({
                                 }, rawSmtp, function (err, info) {
 
                                     logger.error('Caught ObanMicro API Error: relayed to remote MTA.' +
-                                        '; Message envelope from: ' + session.envelope.mailFrom.address +
-                                        '; Message envelope to: ' + session.envelope.rcptTo[0].address);
+                                        '; envelopeFrom: ' + session.envelope.mailFrom.address +
+                                        '; envelopeTo: ' + session.envelope.rcptTo[0].address);
 
                                     logger.info(`Message ${computeHash(rawSmtp)} forwarded to MTA`);
 

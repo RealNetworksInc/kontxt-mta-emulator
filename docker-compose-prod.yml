@@ -9,8 +9,8 @@ services:
       - ./logs/:/usr/src/app/log/
     ports:
       - 25:10025
-    #logging:
-     # driver: none
+    logging:
+      driver: none
     command: npm start
     networks:
       - obanmicro_default
