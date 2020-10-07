@@ -7,10 +7,11 @@ services:
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
+      - ./logs/:/usr/src/app/log/
     ports:
       - 25:10025
-    #logging:
-     # driver: none
+    logging:
+      driver: none
     command: npm start
     networks:
       - obanmicro_default
