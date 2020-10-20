@@ -30,7 +30,10 @@ pipeline {
          stage('Build image'){
             steps {
                 script {
-                    sh('docker build -t $registry:$BUILD_NUMBER .')
+                    VER = sh( script: '''#!/bin/bash
+                        echo ${BRANCH_SELECT} | sed '1s|^refs/heads/||' | cut -d '/' -f 2
+                    ''',returnStdout: true)
+                    sh("docker build -t $registry:${VER} .")
                 }
             }
         }
@@ -38,7 +41,7 @@ pipeline {
             steps{
                 script {
                     sh("eval \$(aws ecr get-login --no-include-email | sed 's|https://||')")
-                    sh('docker push $registry:$BUILD_NUMBER')
+                    sh("docker push $registry:${VER}")
                 }
             }
         }
@@ -46,7 +49,7 @@ pipeline {
    post {
         always {
             // make sure that the Docker image is removed
-            sh('docker rmi $registry:$BUILD_NUMBER --force')
+            sh("docker rmi $registry:${VER} --force")
         }
     }
 }
