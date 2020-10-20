@@ -51,7 +51,7 @@ pipeline {
    post {
         always {
             // make sure that the Docker image is removed
-            sh("docker rmi $registry:${VER} --force")
+            sh("docker rmi $registry:${VER}")
         }
     }
 }
