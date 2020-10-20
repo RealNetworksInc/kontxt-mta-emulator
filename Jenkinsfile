@@ -33,7 +33,9 @@ pipeline {
                     VER = sh( script: '''#!/bin/bash
                         echo ${BRANCH_SELECT} | sed '1s|^refs/heads/||' | cut -d '/' -f 2
                     ''',returnStdout: true)
-                    sh("docker build -t $registry:${VER} .")
+                    sh("docker build -t kontxt-smtp-emulator:latest .")
+                    sh("docker tag kontxt-smtp-emulator:latest $registry:${VER}")
+
                 }
             }
         }
