@@ -46,10 +46,8 @@ const server = new SMTPServer({
     },
     onClose( session ) {
         if( connCount >= 1 ) {
-            // in case the load balancer health check doesn't open properly
             connCount--;
         } else {
-            // reset connCount to 0 if negative as a result of loadbalancer health check
             connCount = 0;
         }
     },
@@ -105,6 +103,12 @@ const server = new SMTPServer({
 
                         logger.info(`Scan skipped. Message ${computeHash(rawSmtp)} forwarded to MTA`);
 
+                        if( connCount >= 1 ) {
+                            connCount--;
+                        } else {
+                            connCount = 0;
+                        }
+
                         connection.quit();
 
                         return callback(null, 'Message OK.');
@@ -147,6 +151,13 @@ const server = new SMTPServer({
 
                             let err = new Error('Message blocked. Inflight Response: ' + kontxtResult);
                             err.responseCode = constants.DROPCODE;
+
+                            if( connCount >= 1 ) {
+                                connCount--;
+                            } else {
+                                connCount = 0;
+                            }
+
                             return callback(err);
 
                         }
@@ -163,6 +174,13 @@ const server = new SMTPServer({
 
                             err = new Error('Message could not be sent, remote relay down. Inflight Response: ' + kontxtResult);
                             err.responseCode = constants.HASHCHECKCODE;
+
+                            if( connCount >= 1 ) {
+                                connCount--;
+                            } else {
+                                connCount = 0;
+                            }
+
                             return callback(err);
 
                         });
@@ -184,7 +202,14 @@ const server = new SMTPServer({
 
                                     logger.info(`Message ${computeHash(rawSmtp)} forwarded to MTA`);
 
+                                    if( connCount >= 1 ) {
+                                        connCount--;
+                                    } else {
+                                        connCount = 0;
+                                    }
+
                                     connection.quit();
+
                                     return callback(null, "Message OK. Inflight Response: " + kontxtResult);
 
                                 });
@@ -193,6 +218,13 @@ const server = new SMTPServer({
 
                                 let err = new Error('Hash check failure. Message not relayed.');
                                 err.responseCode = constants.RELAYDOWNCODE;
+
+                                if( connCount >= 1 ) {
+                                    connCount--;
+                                } else {
+                                    connCount = 0;
+                                }
+
                                 return callback(err);
 
                             }
@@ -212,6 +244,12 @@ const server = new SMTPServer({
                             logger.error('Caught ObanMicro API Error :: Could not connect to SVR MTA: ' + err +
                                 '; Message envelope from: ' + session.envelope.mailFrom.address +
                                 '; Message envelope to: ' + session.envelope.rcptTo[0].address);
+
+                            if( connCount >= 1 ) {
+                                connCount--;
+                            } else {
+                                connCount = 0;
+                            }
 
                             return callback(null, "Message OK but SVR MTA is not available. Envelope logged.");
 
@@ -234,6 +272,12 @@ const server = new SMTPServer({
 
                                     logger.info(`Message ${computeHash(rawSmtp)} forwarded to MTA`);
 
+                                    if( connCount >= 1 ) {
+                                        connCount--;
+                                    } else {
+                                        connCount = 0;
+                                    }
+
                                     connection.quit();
 
                                     return callback(null, 'Message OK.');
@@ -246,6 +290,13 @@ const server = new SMTPServer({
 
                             let err = new Error('Hash check failure. Message not relayed.');
                             err.responseCode = constants.HASHCHECKCODE;
+
+                            if( connCount >= 1 ) {
+                                connCount--;
+                            } else {
+                                connCount = 0;
+                            }
+
                             return callback(err);
                         }
 
@@ -256,6 +307,13 @@ const server = new SMTPServer({
 });
 
 server.on('error', error => {
+
+    if( connCount >= 1 ) {
+        connCount--;
+    } else {
+        connCount = 0;
+    }
+
     logger.error( 'ERROR CAUGHT. Message: ' + error.message );
 });
 

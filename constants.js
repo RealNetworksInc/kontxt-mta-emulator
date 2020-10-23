@@ -10,7 +10,7 @@ module.exports = Object.freeze({
     DROPCODE:       659,
     RELAYDOWNCODE:  512, // thrown in case SVR remote MTA relay is down, should force incoming relay to retry
     HASHCHECKCODE:  554,
-    MAXCLIENTS:     300,
+    MAXCLIENTS:     100, // we certified at 80, but we can handle greater in SVR prod
     MAXSIZE:        20 * 1024 * 1024, //20 MB
 
     // Production service settings -- these could be improved for simplicity in deployment.
