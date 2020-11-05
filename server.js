@@ -12,7 +12,7 @@ const constants = require('./constants');
 
 log4js.configure({
     appenders: {
-        everything: { type: 'dateFile', filename: 'log/all-the-logs.log' }
+        everything: { type: 'dateFile', filename: 'log/all-the-logs.log', daysToKeep: 10, compress: true }
     },
     categories: {
         default: { appenders: [ 'everything' ], level: constants.LOGLEVEL }
