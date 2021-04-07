@@ -128,8 +128,6 @@ const server = new SMTPServer({
 
                 })
                     .then((res) => {
-                        
-                        logger.debug('oban JSON response: ' + res);
 
                         let kontxtResult = '';
 
