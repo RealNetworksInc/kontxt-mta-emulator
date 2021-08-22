@@ -74,7 +74,7 @@ const server = new SMTPServer({
             logger.debug( 'Payload features: ' + constants.KONTXTFEATURE );
             logger.debug( 'Payload rawSmtp: ' + rawSmtp.toString() );
 
-            //establish connection to SVR remote MTA
+            //establish connection to remote MTA
             let connection = new SMTPConnection( {
                 port: constants.DESTPORT,
                 host: constants.DESTIP,
@@ -86,7 +86,7 @@ const server = new SMTPServer({
             });
 
             // if this is set, we will simply relay, return, and not scan
-            if( constants.SKIPOBANSCAN ) {
+            if( constants.SKIPKONTXTSCAN ) {
 
                 connection.connect(() => {
 
@@ -97,7 +97,7 @@ const server = new SMTPServer({
                         to: session.envelope.rcptTo
                     }, rawSmtp, function (err, info) {
 
-                        logger.error('Scan skipped. Caught ObanMicro API Error: relayed to remote MTA.' +
+                        logger.error('Scan skipped. Caught KONTXT API Error: relayed to remote MTA.' +
                             '; Message envelope from: ' + session.envelope.mailFrom.address +
                             '; Message envelope to: ' + session.envelope.rcptTo[0].address);
 
@@ -168,7 +168,7 @@ const server = new SMTPServer({
 
                             logger.info(`Message ${computeHash(rawSmtp)} needs to be retried, MTA likely down`);
 
-                            logger.error('Could not connect to SVR MTA: ' + err +
+                            logger.error('Could not connect to Remote MTA: ' + err +
                                 '; Message envelope from: ' + session.envelope.mailFrom.address +
                                 ' Message envelope to: ' + session.envelope.rcptTo[0].address);
 
@@ -231,17 +231,17 @@ const server = new SMTPServer({
                         });
                     })
                     .catch((error) => {
-                        logger.error('ObanMicro API SMTP POST ERROR CAUGHT, sending message on to SVR MTA. Message: ' + error.message);
+                        logger.error('KONTXT API SMTP POST ERROR CAUGHT, sending message on to MTA. Message: ' + error.message);
 
                         logger.info(`Message ${computeHash(rawSmtp)} allowed, Kontxt failed`);
 
-                        // something is wrong with oban api, so let's send the message back to SVR MTA
+                        // something is wrong with kontxt api, so let's send the message back to next MTA relay
 
                         connection.on('error', function (err) {
 
-                            logger.info(`Message ${computeHash(rawSmtp)} discarded, MT likely down`);
+                            logger.info(`Message ${computeHash(rawSmtp)} discarded, MTA likely down`);
 
-                            logger.error('Caught ObanMicro API Error :: Could not connect to SVR MTA: ' + err +
+                            logger.error('Caught KONTXT API Error :: Could not connect to MTA: ' + err +
                                 '; Message envelope from: ' + session.envelope.mailFrom.address +
                                 '; Message envelope to: ' + session.envelope.rcptTo[0].address);
 
@@ -251,7 +251,7 @@ const server = new SMTPServer({
                                 connCount = 0;
                             }
 
-                            return callback(null, "Message OK but SVR MTA is not available. Envelope logged.");
+                            return callback(null, "Message OK but MTA is not available. Envelope logged.");
 
                         });
 
@@ -259,14 +259,14 @@ const server = new SMTPServer({
 
                             connection.connect(() => {
 
-                                logger.error('Caught ObanMicro API Error: CONNECTION ESTABLISHED TO REMOTE MTA ');
+                                logger.error('Caught KONTXT API Error. Trying to send the message on to the remote MTA ');
 
                                 connection.send({
                                     from: session.envelope.mailFrom,
                                     to: session.envelope.rcptTo
                                 }, rawSmtp, function (err, info) {
 
-                                    logger.error('Caught ObanMicro API Error: relayed to remote MTA.' +
+                                    logger.error('Caught KONTXT API Error: relayed to remote MTA.' +
                                         '; Message envelope from: ' + session.envelope.mailFrom.address +
                                         '; Message envelope to: ' + session.envelope.rcptTo[0].address);
 
