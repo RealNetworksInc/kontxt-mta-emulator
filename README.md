@@ -1,8 +1,10 @@
 ## KONTXT SMTP emulator 
 
-This is an implementation of an MTA for SMTP protocol acting as a reverse-proxy in front of ObanMicro / MMS image text extraction service.
+We thought this service might be useful to fellow developers.  We created this based on NodeMailer in order to transform MMS (SMTP) messages to our JSON ANTI-Spam/fraud API. It is likely useless to you as is unless you are a customer but the implementation might be helpful in general.
 
-The service will provide the REST response code as an MTA/SMTP response code as defined by the customer.
+This is an implementation of an MTA for SMTP protocol acting as a reverse-proxy in front of KONTXT Anti-Spam & MMS image text extraction service.
+
+This service will provide the REST response code as an MTA/SMTP response code as defined by the customer.
 
 In this case, if the REST API responds with a 200, that means the message is acceptable and InFlight returns a block/not-block status.
 
@@ -14,15 +16,6 @@ To run this locally, run:
 `npm install` then
 
 `npm start`
-
-### Test
-For sanity test, use the mms-test-automate script available in the scripts folder,
-
-`tar -xvfz mms-test-automate.tar.gz`
-
-`cd mms-test-automate`
-
-`./mms-telnet-automate.sh message.txt | telnet`
 
 Different messages can be used by changing or using a new message.txt file
 
