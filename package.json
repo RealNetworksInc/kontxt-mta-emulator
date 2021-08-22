@@ -4,7 +4,7 @@
   "description": "SMTP MTA emulator from KONTXT",
   "main": "server.js",
   "dependencies": {
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "log4js": "^6.3.0",
     "nodemailer": "^6.4.16",
     "pino": "^6.3.0",
