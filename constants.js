@@ -13,7 +13,7 @@ module.exports = Object.freeze({
     MAXCLIENTS:     100, // we certified at 80, but we can handle greater in SVR prod
     MAXSIZE:        20 * 1024 * 1024, //20 MB
 
-    // Local dev service settings, this MTA is useless without the KONTXT API setup to receive the SMTP/MMS pacakge
+    // Local dev service settings, this MTA is useless without the KONTXT API setup to receive the SMTP/MMS package
     KONTXTFEATURE:  'inflight_local',
     KONTXTAPI:      'http://192.168.65.2:7777/text/analyze',
     DESTIP:         '192.168.65.2',
